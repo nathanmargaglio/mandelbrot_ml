@@ -37,16 +37,16 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, low_res)
 
         logging.info("Generating Low-Res Mandelbrot: %s", low_res)
-        logging.info("Resolution: %s", low_res)
-        logging.info("x: %s, y: %s, l: %s", x, y, l)
+        logging.info("  Resolution: %s", low_res)
+        logging.info("  x: %s, y: %s, l: %s", x, y, l)
 
         timelog = TimeLogger(True)
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
-        logging.info("Done!")
+        logging.info("  Done!")
         logging.info(timelog.delta())
 
         color_sum = sum(sum(data))
-        logging.info("Color Sum: %s on [%s, %s]", color_sum, min_color_ratio*(dim**2), max_color_ratio*(dim**2))
+        logging.info("  Color Sum: %s on [%s, %s]", color_sum, min_color_ratio*(dim**2), max_color_ratio*(dim**2))
 
         if color_sum < min_color_ratio*(dim**2) or color_sum > max_color_ratio*(dim**2):
             logging.info("Generated Mandelbrot doesn't meet color requirements.")
@@ -64,7 +64,7 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
 
         np.savetxt(mb_dir + "/" + file_name, high_flat, fmt='%d')
         highs.append(high_flat)
-        logging.info("Done!")
+        logging.info("  Done!")
         logging.info(timelog.delta())
 
         i += 1
@@ -82,14 +82,21 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     model.add(Dense(dim**2, init='uniform', activation='sigmoid'))
 
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(x_data, y_data, epochs=200, batch_size=10,  verbose=2)
+    model.fit(x_data, y_data, epochs=20, batch_size=10,  verbose=2)
+
+    directory = "models"
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    model.save("models/" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}" + ".h5")
 
     return model
 
 
-low_res = 2
+low_res = 32
 high_res = 64
-dim = 256
+dim = 128
 model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=100)
 
 directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
