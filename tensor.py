@@ -1,5 +1,6 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.optimizers import SGD
 import numpy as np
 import matplotlib.pyplot as plt
 from main import *
@@ -52,17 +53,20 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
             logging.info("Generated Mandelbrot doesn't meet color requirements.")
             continue
 
-        low_flat = np.concatenate(data).ravel()
-        np.savetxt(mb_dir + "/" + file_name, low_flat, fmt='%d')
+        # low_flat = np.concatenate(data).ravel()
+        low_flat = np.expand_dims(data, 2)
+        np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
         lows.append(low_flat)
         logging.info("Generating High-Res Mandelbrot: %s", high_res)
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, high_res)
 
         timelog = TimeLogger(True)
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
-        high_flat = np.concatenate(data).ravel()
 
-        np.savetxt(mb_dir + "/" + file_name, high_flat, fmt='%d')
+        high_flat = np.concatenate(data).ravel()
+        # high_flat = data
+
+        np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
         highs.append(high_flat)
         logging.info("  Done!")
         logging.info(timelog.delta())
@@ -73,16 +77,31 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     y_data = np.array(highs)
 
     model = Sequential()
-    model.add(Dense(256, input_dim=dim**2, kernel_initializer="uniform", activation='relu'))
-    model.add(Dense(256, init='uniform', activation='relu'))
-    model.add(Dense(256, init='uniform', activation='relu'))
-    model.add(Dense(256, init='uniform', activation='relu'))
-    model.add(Dense(256, init='uniform', activation='relu'))
-    model.add(Dense(256, init='uniform', activation='relu'))
-    model.add(Dense(dim**2, init='uniform', activation='sigmoid'))
 
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    model.fit(x_data, y_data, epochs=20, batch_size=10,  verbose=2)
+    # Old Model
+    # model.add(Dense(256, input_dim=dim**2, kernel_initializer="uniform", activation='relu'))
+    # model.add(Dense(256, init='uniform', activation='relu'))
+    # model.add(Dense(256, init='uniform', activation='relu'))
+    # model.add(Dense(dim**2, init='uniform', activation='sigmoid'))
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    model.add(Conv2D(dim, kernel_size=(5, 5), strides=(1, 1),
+                     activation='relu',
+                     input_shape=(dim,dim, 1)))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(Conv2D(64, (5, 5), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(1000, activation='relu'))
+    model.add(Dense(dim**2, activation='hard_sigmoid'))
+
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+
+    # model.compile(loss='binary_crossentropy',
+    #               optimizer=SGD(lr=0.01),
+    #               metrics=['accuracy'])
+
+    model.fit(x_data, y_data, epochs=25, batch_size=25,  verbose=2)
 
     directory = "models"
 
@@ -94,10 +113,10 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     return model
 
 
-low_res = 32
-high_res = 64
-dim = 128
-model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=100)
+low_res = 4
+high_res = 16
+dim = 32
+model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=1000)
 
 directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
 
@@ -113,10 +132,12 @@ for i in range(50):
     if sum(sum(data)) < dim:
         continue
 
-    low_test = np.array([np.concatenate(data).ravel()])
+    # low_test = np.array([np.concatenate(data).ravel()])
+    low_test = np.array([np.expand_dims(data, 2)])
 
     data = get_data(high_res, dim, x0=x, y0=y, length=l)
-    high_test = np.array([np.concatenate(data).ravel()])
+    # high_test = np.array([np.concatenate(data).ravel()])
+    high_test = np.expand_dims(data, 2)
 
     predictions = model.predict(low_test)
 
@@ -132,4 +153,4 @@ for i in range(50):
     plt.imshow(np.reshape(np.round(predictions[0]), (dim, dim)))
 
     plt.savefig(directory + '/{}.png'.format(i), bbox_inches='tight')
-    plt.clf()
+    plt.close()
