@@ -113,9 +113,9 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     return model
 
 
-low_res = 4
-high_res = 16
-dim = 32
+low_res = 8
+high_res = 128
+dim = 256
 model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=1000)
 
 directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
