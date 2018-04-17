@@ -48,4 +48,7 @@ class TimeLogger:
         delta_time = t0 - self.current_time
         elapsed_time = (self.current_time - self.start_time)
         self.current_time = t0
-        return "{:.2f} sec / {:.2f} elapsed".format(delta_time, elapsed_time)
+        if elapsed_time:
+            return "{:.2f} sec / {:.2f} elapsed".format(delta_time, elapsed_time)
+        else:
+            return "{:.2f} sec".format(delta_time)
