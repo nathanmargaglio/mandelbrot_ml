@@ -3,7 +3,7 @@ from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from keras.optimizers import SGD
 import numpy as np
 import matplotlib.pyplot as plt
-from main import *
+from mandelbrot import *
 import logging
 from utils import TimeLogger
 import os
@@ -16,7 +16,7 @@ seed = 10
 np.random.seed(seed)
 
 
-def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_ratio=0.25, max_color_ratio=0.75):
+def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_ratio=0.05, max_color_ratio=0.95):
     lows = []
     highs = []
 
@@ -31,7 +31,7 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     i = 0
     while i < count:
         logging.info("Generating %sx%s Mandelbrot Data: %s of %s", dim, dim, i, count)
-        x = round(-1*np.random.random(), 3)
+        x = round(-1 * np.random.random(), 3)
         y = round(np.random.random() - 0.5, 3)
         l = np.random.choice(radii)
 
@@ -47,9 +47,10 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
         logging.info(timelog.delta())
 
         color_sum = sum(sum(data))
-        logging.info("  Color Sum: %s on [%s, %s]", color_sum, min_color_ratio*(dim**2), max_color_ratio*(dim**2))
+        logging.info("  Color Sum: %s on [%s, %s]", color_sum, min_color_ratio * (dim ** 2),
+                     max_color_ratio * (dim ** 2))
 
-        if color_sum < min_color_ratio*(dim**2) or color_sum > max_color_ratio*(dim**2):
+        if color_sum < min_color_ratio * (dim ** 2) or color_sum > max_color_ratio * (dim ** 2):
             logging.info("Generated Mandelbrot doesn't meet color requirements.")
             continue
 
@@ -76,14 +77,13 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     x_data = np.array(lows)
     y_data = np.array(highs)
 
-    model = Sequential()
+    return x_data, y_data
 
-    # Old Model
-    # model.add(Dense(256, input_dim=dim**2, kernel_initializer="uniform", activation='relu'))
-    # model.add(Dense(256, init='uniform', activation='relu'))
-    # model.add(Dense(256, init='uniform', activation='relu'))
-    # model.add(Dense(dim**2, init='uniform', activation='sigmoid'))
-    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+def trainer(x_data, y_data):
+
+    dim = x_data.shape[1]
+    model = Sequential()
 
     model.add(Conv2D(dim, kernel_size=(5, 5), strides=(1, 1),
                      activation='relu',
@@ -97,11 +97,7 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
 
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 
-    # model.compile(loss='binary_crossentropy',
-    #               optimizer=SGD(lr=0.01),
-    #               metrics=['accuracy'])
-
-    model.fit(x_data, y_data, epochs=25, batch_size=25,  verbose=2)
+    model.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2)
 
     directory = "models"
 
@@ -113,44 +109,45 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     return model
 
 
-low_res = 8
-high_res = 128
-dim = 256
-model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=1000)
+def test_model(low_res, high_res, model):
+    directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
 
-directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-if not os.path.exists(directory):
-    os.makedirs(directory)
+    for i in range(50):
+        x = -1 * np.random.random()
+        y = np.random.random() - 0.5
+        l = np.random.choice([1, 0.5, 0.25, 0.125])
 
-for i in range(50):
-    x = -1*np.random.random()
-    y = np.random.random() - 0.5
-    l = np.random.choice([1, 0.5, 0.25, 0.125])
-    data = get_data(low_res, dim, x0=x, y0=y, length=l)
+        data = get_data(low_res, dim, x0=x, y0=y, length=l)
+        low_test = np.array([np.expand_dims(data, 2)])
 
-    if sum(sum(data)) < dim:
-        continue
+        data = get_data(high_res, dim, x0=x, y0=y, length=l)
+        high_test = np.expand_dims(data, 2)
 
-    # low_test = np.array([np.concatenate(data).ravel()])
-    low_test = np.array([np.expand_dims(data, 2)])
+        predictions = model.predict(low_test)
 
-    data = get_data(high_res, dim, x0=x, y0=y, length=l)
-    # high_test = np.array([np.concatenate(data).ravel()])
-    high_test = np.expand_dims(data, 2)
+        fig = plt.figure()
 
-    predictions = model.predict(low_test)
+        fig.add_subplot(1, 3, 1)
+        plt.imshow(np.reshape(low_test, (dim, dim)))
 
-    fig = plt.figure()
+        fig.add_subplot(1, 3, 2)
+        plt.imshow(np.reshape(high_test, (dim, dim)))
 
-    fig.add_subplot(1, 3, 1)
-    plt.imshow(np.reshape(low_test, (dim, dim)))
+        fig.add_subplot(1, 3, 3)
+        plt.imshow(np.reshape(np.round(predictions[0]), (dim, dim)))
 
-    fig.add_subplot(1, 3, 2)
-    plt.imshow(np.reshape(high_test, (dim, dim)))
+        plt.savefig(directory + '/{}.png'.format(i), bbox_inches='tight')
+        plt.close()
 
-    fig.add_subplot(1, 3, 3)
-    plt.imshow(np.reshape(np.round(predictions[0]), (dim, dim)))
 
-    plt.savefig(directory + '/{}.png'.format(i), bbox_inches='tight')
-    plt.close()
+if __name__ == "__main__":
+    low_res = 8
+    high_res = 32
+    dim = 64
+    count = 10
+    x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
+    model = trainer(x_data, y_data)
+    test_model(low_res, high_res, model)
