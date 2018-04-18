@@ -1,9 +1,10 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, UpSampling2D, Conv2DTranspose
 from keras.optimizers import SGD
+from keras.callbacks import TensorBoard
 import numpy as np
 import matplotlib.pyplot as plt
-from main import *
+from mandelbrot import *
 import logging
 from utils import TimeLogger
 import os
@@ -16,7 +17,7 @@ seed = 10
 np.random.seed(seed)
 
 
-def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_ratio=0.25, max_color_ratio=0.75):
+def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_ratio=0.05, max_color_ratio=0.95):
     lows = []
     highs = []
 
@@ -78,13 +79,6 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
 
     model = Sequential()
 
-    # Old Model
-    # model.add(Dense(256, input_dim=dim**2, kernel_initializer="uniform", activation='relu'))
-    # model.add(Dense(256, init='uniform', activation='relu'))
-    # model.add(Dense(256, init='uniform', activation='relu'))
-    # model.add(Dense(dim**2, init='uniform', activation='sigmoid'))
-    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-
     model.add(Conv2D(dim, kernel_size=(5, 5), strides=(1, 1),
                      activation='relu',
                      input_shape=(dim,dim, 1)))
@@ -97,11 +91,8 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
 
     model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 
-    # model.compile(loss='binary_crossentropy',
-    #               optimizer=SGD(lr=0.01),
-    #               metrics=['accuracy'])
-
-    model.fit(x_data, y_data, epochs=25, batch_size=25,  verbose=2)
+    board = TensorBoard(log_dir='./Graph', histogram_freq=0, write_graph=True, write_images=False)
+    model.fit(x_data, y_data, epochs=250, batch_size=25,  verbose=2, validation_split=0.2, callbacks=[board])
 
     directory = "models"
 
@@ -113,10 +104,11 @@ def trainer(low_res=2, high_res=32, dim=32, radii=None, count=100, min_color_rat
     return model
 
 
-low_res = 8
-high_res = 128
-dim = 256
-model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=1000)
+low_res = 16
+high_res = 64
+dim = 64
+count = 1000
+model = trainer(low_res=low_res, high_res=high_res, dim=dim, count=count)
 
 directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
 
