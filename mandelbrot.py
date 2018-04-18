@@ -14,8 +14,8 @@ def bounded(c, loop_limit=100, stop_limit=100):
     for i in range(loop_limit):
         value = f(value, c)
         if abs(value) > stop_limit:
-            return False
-    return True
+            return i/float(loop_limit)
+    return 1.
 
 
 def generate(x0=0., y0=0., length=2., dim=64, res=1):
@@ -71,7 +71,7 @@ def sample_res_animation():
 
 def get_data(d, dh, x0=-0.5, y0=0., length=1.):
     mb = generate(dim=d, x0=x0, y0=y0, length=length, res=int(dh / d))
-    return np.array(mb, dtype=int).T
+    return np.array(mb, dtype=float).T
 
 
 if __name__ == "__main__":
@@ -79,10 +79,10 @@ if __name__ == "__main__":
 
     ims = []
 
-    factors = [8, 32]
+    factors = [8, 32, 128]
     for d in factors:
         mb = generate(dim=d, x0=-0.5, length=1., res=int(max(factors)/d))
-        res = np.array(mb, dtype=int).T
+        res = np.array(mb, dtype=float).T
         im = plt.imshow(res, animated=True)
         ims.append([im])
 
