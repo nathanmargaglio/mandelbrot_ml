@@ -115,25 +115,30 @@ def SRCNN(x_data, y_data, load_data=True):
     dim = x_data.shape[1]
 
     SRCNN = Sequential()
-    SRCNN.add(Conv2D(nb_filter=128, nb_row=int(dim/2)-3, nb_col=int(dim/2)-3, init='glorot_uniform',
-                     activation='relu', border_mode='valid', bias=True, input_shape=(dim, dim, 1)))
-    SRCNN.add(Conv2D(nb_filter=64, nb_row=3, nb_col=3, init='glorot_uniform',
-                     activation='relu', border_mode='same', bias=True))
+
+    SRCNN.add(Conv2D(filters=128, kernel_size=(int(dim/2)+1, int(dim/2)+1), kernel_initializer='glorot_uniform',
+                     activation='relu', padding='valid', use_bias=True, input_shape=(dim, dim, 1)))
+
+    SRCNN.add(Conv2D(filters=64, kernel_size=(3, 3), kernel_initializer='glorot_uniform',
+                     activation='relu', padding='same', use_bias=True))
+
     # SRCNN.add(BatchNormalization())
-    SRCNN.add(Conv2D(nb_filter=1, nb_row=5, nb_col=5, init='glorot_uniform',
-                     activation='linear', border_mode='valid', bias=True))
+
+    SRCNN.add(Conv2D(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
+                     activation='linear', padding='same', use_bias=True))
+
     adam = Adam(lr=0.0003)
     SRCNN.compile(optimizer=adam, loss='mean_squared_error', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
     checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
-    callbacks_list = [checkpoint, TensorBoard(histogram_freq=32, write_images=True)]
+    callbacks_list = [checkpoint, TensorBoard(histogram_freq=0, write_images=True)]
 
     if load_data:
         SRCNN.load_weights(filepath)
     else:
-        SRCNN.fit(x_data, y_data, epochs=100, batch_size=10, validation_split=0.2,
+        SRCNN.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2,
               callbacks=callbacks_list)
     return SRCNN
 
@@ -175,10 +180,15 @@ def test_model(low_res, high_res, model):
 
 if __name__ == "__main__":
     low_res = 8
-    high_res = 16
-    dim = 16
-    count = 1000
-    x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
-     # model = trainer(x_data, y_data)
-    model = SRCNN(x_data, y_data, False)
+    high_res = 32
+    dim = 32
+    count = 100
+    load_model = False
+
+    if not load_model:
+        x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
+    else:
+        x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
+
+    model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model)
