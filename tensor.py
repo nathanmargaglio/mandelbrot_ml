@@ -142,7 +142,7 @@ def SRCNN(x_data, y_data, load_data=True):
     if load_data:
         model.load_weights(filepath)
     else:
-        model.fit(x_data, y_data, epochs=5, batch_size=10, validation_split=0.2,
+        model.fit(x_data, y_data, epochs=25, batch_size=100, validation_split=0.2,
               callbacks=callbacks_list)
     return model
 
@@ -188,9 +188,9 @@ def test_model(low_res, high_res, model):
 
 if __name__ == "__main__":
     low_res = 8
-    high_res = 64
-    dim = 64
-    count = 100
+    high_res = 32
+    dim = 32
+    count = 1000
     load_model = False
 
     if not load_model:
