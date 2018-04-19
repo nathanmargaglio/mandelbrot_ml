@@ -36,9 +36,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         y = round(np.random.random() - 0.5, 3)
         l = np.random.choice(radii)
 
-        x = 0
-        y = 0
-        l = 2.
+        # x = 0
+        # y = 0
+        # l = 2.
 
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, low_res)
 
@@ -158,9 +158,9 @@ def test_model(low_res, high_res, model):
         y = np.random.random() - 0.5
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
-        x = 0
-        y = 0
-        l = 2.0
+        # x = 0
+        # y = 0
+        # l = 2.0
 
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
         low_test = np.array([np.expand_dims(data, 2)])
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     low_res = 8
     high_res = 64
     dim = 64
-    count = 1
+    count = 100
     load_model = False
 
     if not load_model:
@@ -198,10 +198,10 @@ if __name__ == "__main__":
     else:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
 
-    sam_x = x_data[0]
-    sam_y = y_data[0]
-
-    x_data = np.array([sam_x]*100)
-    y_data = np.array([sam_y]*100)
+    # sam_x = x_data[0]
+    # sam_y = y_data[0]
+    #
+    # x_data = np.array([sam_x]*100)
+    # y_data = np.array([sam_y]*100)
     model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model)
