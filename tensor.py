@@ -1,5 +1,5 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, BatchNormalization, Conv2DTranspose, Reshape
 from keras.optimizers import SGD, Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import numpy as np
@@ -36,6 +36,10 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         y = round(np.random.random() - 0.5, 3)
         l = np.random.choice(radii)
 
+        x = 0
+        y = 0
+        l = 2.
+
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, low_res)
 
         logging.info("Generating Low-Res Mandelbrot: %s", low_res)
@@ -43,7 +47,7 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         logging.info("  x: %s, y: %s, l: %s", x, y, l)
 
         timelog = TimeLogger(True)
-        data = get_data(low_res, dim*2, x0=x, y0=y, length=l)
+        data = get_data(low_res, dim, x0=x, y0=y, length=l)
         logging.info("  Done!")
         logging.info(timelog.delta())
 
@@ -114,21 +118,21 @@ def trainer(x_data, y_data):
 def SRCNN(x_data, y_data, load_data=True):
     dim = x_data.shape[1]
 
-    SRCNN = Sequential()
+    model = Sequential()
 
-    SRCNN.add(Conv2D(filters=128, kernel_size=(int(dim/2)+1, int(dim/2)+1), kernel_initializer='glorot_uniform',
-                     activation='relu', padding='valid', use_bias=True, input_shape=(dim, dim, 1)))
+    # model.add(Conv2D(filters=8, kernel_size=(3, 3), kernel_initializer='glorot_uniform',
+    #                  activation='relu', padding='valid', use_bias=True, input_shape=(dim, dim, 1)))
 
-    SRCNN.add(Conv2D(filters=64, kernel_size=(3, 3), kernel_initializer='glorot_uniform',
-                     activation='relu', padding='same', use_bias=True))
+    model.add(Dense(100, activation='relu', input_shape=(dim, dim, 1)))
+    model.add(Dense(100, activation='linear', use_bias=True))
+    model.add(Dense(1, activation='hard_sigmoid', use_bias=True))
+    #
+    # model.add(Reshape((dim, dim)))
 
-    # SRCNN.add(BatchNormalization())
+    # model.add(Conv2DTranspose(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
+    #                   activation='linear', padding='valid', use_bias=True))
 
-    SRCNN.add(Conv2D(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
-                     activation='linear', padding='same', use_bias=True))
-
-    adam = Adam(lr=0.0003)
-    SRCNN.compile(optimizer=adam, loss='mean_squared_error', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='mean_absolute_error', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
@@ -136,11 +140,11 @@ def SRCNN(x_data, y_data, load_data=True):
     callbacks_list = [checkpoint, TensorBoard(histogram_freq=0, write_images=True)]
 
     if load_data:
-        SRCNN.load_weights(filepath)
+        model.load_weights(filepath)
     else:
-        SRCNN.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2,
+        model.fit(x_data, y_data, epochs=5, batch_size=10, validation_split=0.2,
               callbacks=callbacks_list)
-    return SRCNN
+    return model
 
 
 def test_model(low_res, high_res, model):
@@ -149,12 +153,16 @@ def test_model(low_res, high_res, model):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i in range(50):
+    for i in range(1):
         x = -1 * np.random.random()
         y = np.random.random() - 0.5
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
-        data = get_data(low_res, dim*2, x0=x, y0=y, length=l)
+        x = 0
+        y = 0
+        l = 2.0
+
+        data = get_data(low_res, dim, x0=x, y0=y, length=l)
         low_test = np.array([np.expand_dims(data, 2)])
 
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
@@ -166,7 +174,7 @@ def test_model(low_res, high_res, model):
         fig = plt.figure()
 
         fig.add_subplot(1, 3, 1)
-        plt.imshow(np.reshape(low_test, (dim*2, dim*2)))
+        plt.imshow(np.reshape(low_test, (dim, dim)))
 
         fig.add_subplot(1, 3, 2)
         plt.imshow(np.reshape(high_test, (dim, dim)))
@@ -180,9 +188,9 @@ def test_model(low_res, high_res, model):
 
 if __name__ == "__main__":
     low_res = 8
-    high_res = 32
-    dim = 32
-    count = 100
+    high_res = 64
+    dim = 64
+    count = 1
     load_model = False
 
     if not load_model:
@@ -190,5 +198,10 @@ if __name__ == "__main__":
     else:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
 
+    sam_x = x_data[0]
+    sam_y = y_data[0]
+
+    x_data = np.array([sam_x]*100)
+    y_data = np.array([sam_y]*100)
     model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model)
