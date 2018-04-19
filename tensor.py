@@ -153,7 +153,7 @@ def test_model(low_res, high_res, model):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i in range(1):
+    for i in range(50):
         x = -1 * np.random.random()
         y = np.random.random() - 0.5
         l = np.random.choice([1, 0.5, 0.25, 0.125])
