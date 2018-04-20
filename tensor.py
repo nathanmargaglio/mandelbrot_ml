@@ -36,9 +36,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         y = round(np.random.random() - 0.5, 3)
         l = np.random.choice(radii)
 
-        # x = 0
-        # y = 0
-        # l = 2.
+        x = 0
+        y = 0
+        l = 1.5
 
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, low_res)
 
@@ -120,37 +120,17 @@ def SRCNN(x_data, y_data, load_data=True):
 
     
     model = Sequential()
-    #model.add(Dense(512, input_shape=(dim, dim, 1), kernel_initializer="uniform", activation='relu'))
-    #model.add(Dense(512, init='uniform', activation='relu'))
-    #model.add(Dense(512, init='uniform', activation='relu'))
-    #model.add(Dense(512, init='uniform', activation='relu'))
-    #model.add(Dense(512, init='uniform', activation='relu'))
-    #model.add(Dense(512, init='uniform', activation='relu'))
-    #model.add(Dense(1, init='uniform', activation='linear'))
+    adam = Adam(lr=0.001, decay=0.0001)
 
-    adam = Adam(lr=0.0001, decay=0.0001)
-    #model.compile(loss='mse', optimizer=adam, metrics=['accuracy'])
-    #model = Sequential()
-
-    model.add(Conv2D(filters=64, kernel_size=(5,5), padding='valid', input_shape=(dim, dim, 1), activation='relu', init='he_normal'))
-    model.add(Conv2D(32, 1, 1, activation='relu', init='he_normal'))
-    model.add(Conv2D(1, 5, 5, init='he_normal'))
-    #model.add(Conv2DTranspose(filters=1, kernel_size=(5, 5), kernel_initializer='glorot_uniform',
-     #                                           activation='linear', padding='valid', use_bias=True))
-
-    # model.add(Conv2D(filters=8, kernel_size=(3, 3), kernel_initializer='glorot_uniform',
-    #                  activation='relu', padding='valid', use_bias=True, input_shape=(dim, dim, 1)))
-
-    # model.add(Dense(100, activation='relu', input_shape=(dim, dim, 1)))
-    # model.add(Dense(100, activation='linear', use_bias=True))
-    # model.add(Dense(1, activation='hard_sigmoid', use_bias=True))
-    #
-    #model.add(Reshape((dim, dim, 1)))
-
-    model.add(Conv2DTranspose(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
+    model.add(Conv2D(filters=64, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1), activation='relu', init='he_normal'))
+    model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal'))
+    model.add(Dense(1000, activation='linear', use_bias=True))
+    model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
+                              activation='sigmoid', padding='valid', use_bias=True))
+    model.add(Conv2DTranspose(filters=1, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
                        activation='linear', padding='valid', use_bias=True))
 
-    model.compile(optimizer=Adam(lr=0.001), loss='mse', metrics=['accuracy'])
+    model.compile(optimizer=adam, loss='mse', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
@@ -171,14 +151,14 @@ def test_model(low_res, high_res, model):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i in range(50):
+    for i in range(1):
         x = -1 * np.random.random()
         y = np.random.random() - 0.5
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
-        # x = 0
-        # y = 0
-        # l = 2.0
+        x = 0
+        y = 0
+        l = 2.0
 
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
         low_test = np.array([np.expand_dims(data, 2)])
@@ -208,18 +188,19 @@ if __name__ == "__main__":
     low_res = 16
     high_res = 32
     dim = 32
-    count = 100
+    count = 1
     load_model = False
+    # load_model = True
 
     if not load_model:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
     else:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
 
-    # sam_x = x_data[0]
-    # sam_y = y_data[0]
-    #
-    # x_data = np.array([sam_x]*100)
-    # y_data = np.array([sam_y]*100)
+    sam_x = x_data[0]
+    sam_y = y_data[0]
+
+    x_data = np.array([sam_x]*100)
+    y_data = np.array([sam_y]*100)
     model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model)
