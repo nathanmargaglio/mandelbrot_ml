@@ -123,14 +123,14 @@ def SRCNN(x_data, y_data, load_data=True):
     model = Sequential()
     adam = Adam(lr=0.001, decay=0.0001)
 
-    model.add(Conv2D(filters=256, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
+    model.add(Conv2D(filters=256, kernel_size=(8,8), padding='valid', input_shape=(dim, dim, 1),
                      activation='relu', init='he_normal', use_bias=True))
     #model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
     #model.add(Dense(1000, activation='sigmoid', use_bias=True))
     model.add(Dense(256, activation='sigmoid', use_bias=True))
     #model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
     #                          activation='sigmoid', padding='valid', use_bias=True))
-    model.add(Conv2DTranspose(filters=1, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
+    model.add(Conv2DTranspose(filters=1, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
                        activation='linear', padding='valid', use_bias=True))
 
     model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
@@ -148,7 +148,7 @@ def SRCNN(x_data, y_data, load_data=True):
     return model
 
 
-def test_model(low_res, high_res, model):
+def test_model(low_res, high_res, model, show=False):
     directory = "results/res_" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}"
 
     if not os.path.exists(directory):
@@ -184,6 +184,8 @@ def test_model(low_res, high_res, model):
         plt.imshow(np.reshape(predictions[0], (dim, dim)))
 
         plt.savefig(directory + '/{}.png'.format(i), bbox_inches='tight')
+        if show:
+            plt.show()
         plt.close()
 
 
@@ -196,7 +198,7 @@ if __name__ == "__main__":
     #load_model = True
 
     if len(sys.argv) > 1:
-        load_model = (sys.argv[1] == 'true')
+        load_model = (sys.argv[1] == 'load')
 
     if not load_model:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
@@ -209,4 +211,4 @@ if __name__ == "__main__":
     x_data = np.array([sam_x]*100)
     y_data = np.array([sam_y]*100)
     model = SRCNN(x_data, y_data, load_model)
-    test_model(low_res, high_res, model)
+    test_model(low_res, high_res, model, show=True)
