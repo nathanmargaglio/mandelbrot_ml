@@ -176,7 +176,7 @@ if __name__ == "__main__":
     low_res = 16
     high_res = 64
     dim = 64
-    count = 10
+    count = 100
     load_model = False
     #load_model = True
 
