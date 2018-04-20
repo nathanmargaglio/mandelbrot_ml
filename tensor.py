@@ -123,10 +123,10 @@ def SRCNN(x_data, y_data, load_data=True):
     model = Sequential()
     adam = Adam(lr=0.001, decay=0.0001)
 
-    model.add(Conv2D(filters=64, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
+    model.add(Conv2D(filters=256, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
                      activation='relu', init='he_normal', use_bias=True))
     #model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
-    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    #model.add(Dense(1000, activation='sigmoid', use_bias=True))
     model.add(Dense(1000, activation='sigmoid', use_bias=True))
     #model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
     #                          activation='sigmoid', padding='valid', use_bias=True))
