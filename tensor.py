@@ -1,5 +1,5 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Reshape, MaxPooling2D, Flatten, Conv2DTranspose
+from keras.layers import Dense, Conv2D, Reshape, MaxPooling2D, Flatten, Conv2DTranspose, BatchNormalization
 from keras.optimizers import SGD, Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import numpy as np
@@ -87,26 +87,30 @@ def SRCNN(x_data, y_data, load_data=True):
     
     model = Sequential()
     opt = Adam(lr=0.001, decay=0.0001)
-    opt = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
+    opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
     model.add(Dense(1000, activation='sigmoid', use_bias=True, input_shape=dim))
+    model.add(BatchNormalization())
     model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(BatchNormalization())
     model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(BatchNormalization())
     model.add(Dense(1000, activation='sigmoid', use_bias=True))
-
+    model.add(BatchNormalization())
     model.add(Dense(dim[0], activation='linear', use_bias=True))
+    model.add(BatchNormalization())
     model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
-    checkpoint = ModelCheckpoint(filepath, monitor='acc', verbose=1, save_best_only=True, mode='max')
+    checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
     callbacks_list = [checkpoint, TensorBoard(histogram_freq=0, write_images=True)]
 
     if load_data:
         model.load_weights(filepath)
     else:
         print(x_data.shape)
-        model.fit(x_data, y_data, epochs=250, batch_size=1,
+        model.fit(x_data, y_data, epochs=50, batch_size=100,
               callbacks=callbacks_list)
     return model
 
@@ -160,10 +164,10 @@ def test_model(low_res, high_res, model, show=False):
 
 
 if __name__ == "__main__":
-    low_res = 8
-    high_res = 16
-    dim = 32
-    count = 100
+    low_res = 16
+    high_res = 64
+    dim = 64
+    count = 1000
     load_model = False
     #load_model = True
 
@@ -173,7 +177,7 @@ if __name__ == "__main__":
     if not load_model:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
     else:
-        x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
+        x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=1)
 
     model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model, show=True)
