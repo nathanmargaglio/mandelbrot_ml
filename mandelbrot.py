@@ -14,7 +14,7 @@ def bounded(c, loop_limit=100, stop_limit=100):
     for i in range(loop_limit):
         value = f(value, c)
         if abs(value) > stop_limit:
-            return i/float(loop_limit)
+            return 0.
     return 1.
 
 

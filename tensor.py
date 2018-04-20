@@ -37,10 +37,6 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         y = round(np.random.random() - 0.5, 3)
         l = np.random.choice(radii)
 
-        x = 0
-        y = 0
-        l = 1.5
-
         file_name = "{:.3f}x_{:.3f}y_{:.3f}l_{}res.txt".format(x, y, l, low_res)
 
         logging.info("Generating Low-Res Mandelbrot: %s", low_res)
@@ -60,8 +56,8 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         #     logging.info("Generated Mandelbrot doesn't meet color requirements.")
         #     continue
 
-        # low_flat = np.concatenate(data).ravel()
-        low_flat = np.expand_dims(data, 2)
+        low_flat = np.concatenate(data).ravel()
+        # low_flat = data
         np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
         lows.append(low_flat)
         logging.info("Generating High-Res Mandelbrot: %s", high_res)
@@ -70,8 +66,7 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         timelog = TimeLogger(True)
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
 
-        high_flat = np.expand_dims(data, 2)
-        # high_flat = np.concatenate(data).ravel()
+        high_flat = np.concatenate(data).ravel()
         # high_flat = data
 
         np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
@@ -87,53 +82,20 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
     return x_data, y_data
 
 
-def trainer(x_data, y_data):
-
-    dim = x_data.shape[1]
-    model = Sequential()
-
-    model.add(Conv2D(dim, kernel_size=(5, 5), strides=(1, 1),
-                     activation='relu',
-                     input_shape=(dim,dim, 1)))
-    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(Conv2D(64, (5, 5), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Flatten())
-    model.add(Dense(1000, activation='relu'))
-    model.add(Dense(dim**2, activation='hard_sigmoid'))
-
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
-
-    model.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2)
-
-    directory = "models"
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    model.save("models/" + f"{datetime.datetime.now():%Y-%m-%d_%H:%M%p}" + ".h5")
-
-    return model
-
-
 def SRCNN(x_data, y_data, load_data=True):
-    dim = x_data.shape[1]
-
+    dim = x_data[0].shape
     
     model = Sequential()
-    adam = Adam(lr=0.001, decay=0.0001)
+    opt = Adam(lr=0.001, decay=0.0001)
+    opt = SGD(lr=0.001, decay=1e-6, momentum=0.9, nesterov=True)
 
-    model.add(Conv2D(filters=256, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
-                     activation='tanh', init='he_normal', use_bias=True))
-    #model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
-    #model.add(Dense(1000, activation='sigmoid', use_bias=True))
-    model.add(Dense(256, activation='tanh', use_bias=True))
-    model.add(Conv2DTranspose(filters=128, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
-                              activation='tanh', padding='valid', use_bias=True))
-    model.add(Conv2DTranspose(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
-                       activation='linear', padding='valid', use_bias=True))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True, input_shape=dim))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True))
 
-    model.compile(optimizer='sgd', loss='mse', metrics=['accuracy'])
+    model.add(Dense(dim[0], activation='linear', use_bias=True))
+    model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
@@ -143,7 +105,8 @@ def SRCNN(x_data, y_data, load_data=True):
     if load_data:
         model.load_weights(filepath)
     else:
-        model.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2,
+        print(x_data.shape)
+        model.fit(x_data, y_data, epochs=250, batch_size=1,
               callbacks=callbacks_list)
     return model
 
@@ -154,46 +117,53 @@ def test_model(low_res, high_res, model, show=False):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for i in range(1):
+    for i in range(50):
         x = -1 * np.random.random()
         y = np.random.random() - 0.5
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
-        x = 0
-        y = 0
-        l = 2.0
-
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
-        low_test = np.array([np.expand_dims(data, 2)])
+        low_test = np.array([np.concatenate(data).ravel()])
 
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
         # high_test = np.expand_dims(data, 2)
-        high_test = np.array([np.expand_dims(data, 2)])
+        high_test = np.array([np.concatenate(data).ravel()])
 
         predictions = model.predict(low_test)
 
         fig = plt.figure()
 
         fig.add_subplot(1, 3, 1)
-        plt.imshow(np.reshape(low_test, (dim, dim)))
+        low_fig = np.reshape(low_test, (dim, dim))
+        plt.imshow(low_fig)
 
         fig.add_subplot(1, 3, 2)
-        plt.imshow(np.reshape(high_test, (dim, dim)))
+        high_fig = np.reshape(high_test, (dim, dim))
+        plt.imshow(high_fig)
 
         fig.add_subplot(1, 3, 3)
-        plt.imshow(np.reshape(predictions[0], (dim, dim)))
+        pred_fig = np.reshape(predictions[0], (dim, dim))
+        plt.imshow(pred_fig)
 
         plt.savefig(directory + '/{}.png'.format(i), bbox_inches='tight')
         if show:
+            print("LOW_MAX", np.amax(low_fig))
+            print("LOW_MIN", np.amin(low_fig))
+
+            print("HIG_MAX", np.amax(high_fig))
+            print("HIG_MIN", np.amin(high_fig))
+
+            print("PRE_MAX", np.amax(pred_fig))
+            print("PRE_MIN", np.amin(pred_fig))
             plt.show()
         plt.close()
 
 
 if __name__ == "__main__":
-    low_res = 16
-    high_res = 64
-    dim = 64
-    count = 1
+    low_res = 8
+    high_res = 16
+    dim = 32
+    count = 100
     load_model = False
     #load_model = True
 
@@ -205,10 +175,5 @@ if __name__ == "__main__":
     else:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=2)
 
-    sam_x = x_data[0]
-    sam_y = y_data[0]
-
-    x_data = np.array([sam_x]*100)
-    y_data = np.array([sam_y]*100)
     model = SRCNN(x_data, y_data, load_model)
     test_model(low_res, high_res, model, show=True)
