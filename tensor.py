@@ -89,13 +89,13 @@ def SRCNN(x_data, y_data, load_data=True):
     opt = Adam(lr=0.001, decay=0.0001)
     opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
-    model.add(Dense(1000, activation='sigmoid', use_bias=True, input_shape=dim))
+    model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
     model.add(BatchNormalization())
-    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='tanh', use_bias=True))
     model.add(BatchNormalization())
-    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='tanh', use_bias=True))
     model.add(BatchNormalization())
-    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='tanh', use_bias=True))
     model.add(BatchNormalization())
     model.add(Dense(dim[0], activation='linear', use_bias=True))
     model.add(BatchNormalization())
@@ -110,7 +110,7 @@ def SRCNN(x_data, y_data, load_data=True):
         model.load_weights(filepath)
     else:
         print(x_data.shape)
-        model.fit(x_data, y_data, epochs=50, batch_size=100,
+        model.fit(x_data, y_data, epochs=1000, batch_size=100,
               callbacks=callbacks_list)
     return model
 
