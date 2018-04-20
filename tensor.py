@@ -56,8 +56,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         #     logging.info("Generated Mandelbrot doesn't meet color requirements.")
         #     continue
 
-        low_flat = np.concatenate(data).ravel()
-        # low_flat = data
+        # low_flat = np.concatenate(data).ravel()
+        low_flat = np.expand_dims(data, 2)
+
         np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
         lows.append(low_flat)
         logging.info("Generating High-Res Mandelbrot: %s", high_res)
@@ -66,8 +67,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
         timelog = TimeLogger(True)
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
 
-        high_flat = np.concatenate(data).ravel()
+        # high_flat = np.concatenate(data).ravel()
         # high_flat = data
+        high_flat = np.expand_dims(data, 2)
 
         np.savetxt(mb_dir + "/" + file_name, data, fmt='%d')
         highs.append(high_flat)
@@ -83,22 +85,30 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
 
 
 def SRCNN(x_data, y_data, load_data=True):
-    dim = x_data[0].shape
+    shape = x_data[0].shape
     
     model = Sequential()
     opt = Adam(lr=0.001, decay=0.0001)
     # opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
-    model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
-    model.add(BatchNormalization())
-    model.add(Dense(1000, activation='tanh', use_bias=True))
-    model.add(BatchNormalization())
-    model.add(Dense(1000, activation='tanh', use_bias=True))
-    model.add(BatchNormalization())
-    model.add(Dense(1000, activation='tanh', use_bias=True))
-    model.add(BatchNormalization())
-    model.add(Dense(dim[0], activation='linear', use_bias=True))
-    model.add(BatchNormalization())
+    # model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
+    # model.add(BatchNormalization())
+    # model.add(Dense(1000, activation='tanh', use_bias=True))
+    # model.add(BatchNormalization())
+    # model.add(Dense(1000, activation='tanh', use_bias=True))
+    # model.add(BatchNormalization())
+    # model.add(Dense(1000, activation='tanh', use_bias=True))
+    # model.add(BatchNormalization())
+    # model.add(Dense(dim[0], activation='linear', use_bias=True))
+    # model.add(BatchNormalization())
+
+    model.add(Conv2D(64, kernel_size=(2, 2), input_shape=shape))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Conv2DTranspose(1, kernel_size=(2, 2)))
+
     model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 
     # checkpoint
@@ -110,7 +120,7 @@ def SRCNN(x_data, y_data, load_data=True):
         model.load_weights(filepath)
     else:
         print(x_data.shape)
-        model.fit(x_data, y_data, epochs=250, batch_size=100,
+        model.fit(x_data, y_data, epochs=250, batch_size=10,
               callbacks=callbacks_list)
     return model
 
@@ -127,11 +137,12 @@ def test_model(low_res, high_res, model, show=False):
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
-        low_test = np.array([np.concatenate(data).ravel()])
+        low_test = np.expand_dims(data, 2)
+        # low_test = np.array([np.concatenate(data).ravel()])
 
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
-        # high_test = np.expand_dims(data, 2)
-        high_test = np.array([np.concatenate(data).ravel()])
+        high_test = np.expand_dims(data, 2)
+        # high_test = np.array([np.concatenate(data).ravel()])
 
         predictions = model.predict(low_test)
 
