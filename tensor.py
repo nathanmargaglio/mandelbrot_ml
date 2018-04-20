@@ -177,9 +177,9 @@ def test_model(low_res, high_res, model, show=False):
 
 if __name__ == "__main__":
     low_res = 8
-    high_res = 32
-    dim = 32
-    count = 10
+    high_res = 16
+    dim = 16
+    count = 100
     load_model = False
     #load_model = True
 
