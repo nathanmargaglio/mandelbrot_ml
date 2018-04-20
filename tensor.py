@@ -8,6 +8,7 @@ from mandelbrot import *
 import logging
 from utils import TimeLogger
 import os
+import sys
 import datetime
 
 
@@ -122,15 +123,16 @@ def SRCNN(x_data, y_data, load_data=True):
     model = Sequential()
     adam = Adam(lr=0.001, decay=0.0001)
 
-    model.add(Conv2D(filters=64, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1), activation='relu', init='he_normal'))
-    model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal'))
-    model.add(Dense(1000, activation='linear', use_bias=True))
+    model.add(Conv2D(filters=64, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
+                     activation='relu', init='he_normal', use_bias=True))
+    model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
+    # model.add(Dense(1000, activation='linear', use_bias=True))
     model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
                               activation='sigmoid', padding='valid', use_bias=True))
     model.add(Conv2DTranspose(filters=1, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
-                       activation='linear', padding='valid', use_bias=True))
+                       activation='hard_sigmoid', padding='valid', use_bias=True))
 
-    model.compile(optimizer=adam, loss='mse', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
@@ -186,11 +188,14 @@ def test_model(low_res, high_res, model):
 
 if __name__ == "__main__":
     low_res = 16
-    high_res = 32
-    dim = 32
+    high_res = 64
+    dim = 64
     count = 1
     load_model = False
-    # load_model = True
+    #load_model = True
+
+    if len(sys.argv) > 1:
+        load_model = (sys.argv[1] == 'true')
 
     if not load_model:
         x_data, y_data = generate_data_sets(low_res=low_res, high_res=high_res, dim=dim, count=count)
