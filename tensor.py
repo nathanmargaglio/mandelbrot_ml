@@ -127,7 +127,7 @@ def SRCNN(x_data, y_data, load_data=True):
                      activation='relu', init='he_normal', use_bias=True))
     #model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
     #model.add(Dense(1000, activation='sigmoid', use_bias=True))
-    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
     #model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
     #                          activation='sigmoid', padding='valid', use_bias=True))
     model.add(Conv2DTranspose(filters=1, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
