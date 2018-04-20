@@ -23,7 +23,7 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100, mi
     highs = []
 
     if not radii:
-        radii = [1., 0.5, 0.25, 0.125]
+        radii = [0.5]
 
     mb_dir = "mandelbrots/{}".format(dim)
 
@@ -87,7 +87,7 @@ def SRCNN(x_data, y_data, load_data=True):
     
     model = Sequential()
     opt = Adam(lr=0.001, decay=0.0001)
-    opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
+    # opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
     model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
     model.add(BatchNormalization())
@@ -110,7 +110,7 @@ def SRCNN(x_data, y_data, load_data=True):
         model.load_weights(filepath)
     else:
         print(x_data.shape)
-        model.fit(x_data, y_data, epochs=1000, batch_size=100,
+        model.fit(x_data, y_data, epochs=250, batch_size=100,
               callbacks=callbacks_list)
     return model
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     low_res = 16
     high_res = 64
     dim = 64
-    count = 1000
+    count = 100
     load_model = False
     #load_model = True
 
