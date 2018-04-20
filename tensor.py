@@ -88,7 +88,7 @@ def SRCNN(x_data, y_data, load_data=True):
     shape = x_data[0].shape
     
     model = Sequential()
-    opt = Adam(lr=0.01, decay=0.001)
+    opt = Adam(lr=0.001, decay=0.0001)
     # opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
     # model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
@@ -102,11 +102,8 @@ def SRCNN(x_data, y_data, load_data=True):
     # model.add(Dense(dim[0], activation='linear', use_bias=True))
     # model.add(BatchNormalization())
 
-    model.add(Conv2D(64, kernel_size=(8, 8), input_shape=shape))
+    model.add(Conv2D(64, kernel_size=(1, 1), input_shape=shape))
     model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Conv2D(64, kernel_size=(4, 4)))
-    model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Conv2DTranspose(1, kernel_size=(11, 11), use_bias=True))
     model.add(Dense(256, activation='sigmoid', use_bias=True))
     model.add(Conv2DTranspose(1, kernel_size=(1, 1), activation='linear', use_bias=True))
 
@@ -121,7 +118,7 @@ def SRCNN(x_data, y_data, load_data=True):
         model.load_weights(filepath)
     else:
         print(x_data.shape)
-        model.fit(x_data, y_data, epochs=250, batch_size=10,
+        model.fit(x_data, y_data, epochs=250, batch_size=1,
               callbacks=callbacks_list)
     return model
 
