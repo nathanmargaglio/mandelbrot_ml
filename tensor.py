@@ -104,7 +104,11 @@ def SRCNN(x_data, y_data, load_data=True):
 
     model.add(Conv2D(64, kernel_size=(8, 8), input_shape=shape))
     model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Conv2DTranspose(1, kernel_size=(8, 8), activation='linear', use_bias=True))
+    model.add(Conv2D(64, kernel_size=(4, 4)))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Conv2DTranspose(1, kernel_size=(11, 11), use_bias=True))
+    model.add(Dense(256, activation='sigmoid', use_bias=True))
+    model.add(Conv2DTranspose(1, kernel_size=(1, 1), activation='linear', use_bias=True))
 
     model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 
