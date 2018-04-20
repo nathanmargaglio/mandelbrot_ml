@@ -88,7 +88,7 @@ def SRCNN(x_data, y_data, load_data=True):
     shape = x_data[0].shape
     
     model = Sequential()
-    opt = Adam(lr=0.001, decay=0.0001)
+    opt = Adam(lr=0.01, decay=0.001)
     # opt = SGD(lr=0.1, decay=0.001, momentum=0.99, nesterov=True)
 
     # model.add(Dense(1000, activation='tanh', use_bias=True, input_shape=dim))
