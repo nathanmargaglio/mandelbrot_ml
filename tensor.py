@@ -107,7 +107,7 @@ def SRCNN(x_data, y_data, load_data=True):
     model.add(Conv2D(128, kernel_size=(8, 8), input_shape=shape))
     model.add(Flatten())
     model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Dense(64**2, activation='sigmoid', use_bias=True))
+    model.add(Dense(shape[0]**2, activation='sigmoid', use_bias=True))
     model.add(Reshape(shape))
 
     model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
@@ -176,9 +176,9 @@ def test_model(low_res, high_res, model, show=False):
 
 
 if __name__ == "__main__":
-    low_res = 16
-    high_res = 64
-    dim = 64
+    low_res = 8
+    high_res = 32
+    dim = 32
     count = 10
     load_model = False
     #load_model = True
