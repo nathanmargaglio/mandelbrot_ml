@@ -1,5 +1,5 @@
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Conv2DTranspose
+from keras.layers import Dense, Conv2D, Reshape, MaxPooling2D, Flatten, Conv2DTranspose
 from keras.optimizers import SGD, Adam
 from keras.callbacks import TensorBoard, ModelCheckpoint
 import numpy as np
@@ -118,13 +118,25 @@ def trainer(x_data, y_data):
 def SRCNN(x_data, y_data, load_data=True):
     dim = x_data.shape[1]
 
+    
     model = Sequential()
+    #model.add(Dense(512, input_shape=(dim, dim, 1), kernel_initializer="uniform", activation='relu'))
+    #model.add(Dense(512, init='uniform', activation='relu'))
+    #model.add(Dense(512, init='uniform', activation='relu'))
+    #model.add(Dense(512, init='uniform', activation='relu'))
+    #model.add(Dense(512, init='uniform', activation='relu'))
+    #model.add(Dense(512, init='uniform', activation='relu'))
+    #model.add(Dense(1, init='uniform', activation='linear'))
 
-    model.add(Conv2D(64, 1, 1, input_shape=(dim, dim, 1), activation='relu', init='he_normal'))
+    adam = Adam(lr=0.0001, decay=0.0001)
+    #model.compile(loss='mse', optimizer=adam, metrics=['accuracy'])
+    #model = Sequential()
+
+    model.add(Conv2D(filters=64, kernel_size=(5,5), padding='valid', input_shape=(dim, dim, 1), activation='relu', init='he_normal'))
     model.add(Conv2D(32, 1, 1, activation='relu', init='he_normal'))
     model.add(Conv2D(1, 5, 5, init='he_normal'))
-    model.add(Conv2DTranspose(filters=1, kernel_size=(5, 5), kernel_initializer='glorot_uniform',
-                                                activation='linear', padding='valid', use_bias=True))
+    #model.add(Conv2DTranspose(filters=1, kernel_size=(5, 5), kernel_initializer='glorot_uniform',
+     #                                           activation='linear', padding='valid', use_bias=True))
 
     # model.add(Conv2D(filters=8, kernel_size=(3, 3), kernel_initializer='glorot_uniform',
     #                  activation='relu', padding='valid', use_bias=True, input_shape=(dim, dim, 1)))
@@ -133,10 +145,10 @@ def SRCNN(x_data, y_data, load_data=True):
     # model.add(Dense(100, activation='linear', use_bias=True))
     # model.add(Dense(1, activation='hard_sigmoid', use_bias=True))
     #
-    # model.add(Reshape((dim, dim)))
+    #model.add(Reshape((dim, dim, 1)))
 
-    # model.add(Conv2DTranspose(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
-    #                   activation='linear', padding='valid', use_bias=True))
+    model.add(Conv2DTranspose(filters=1, kernel_size=(1, 1), kernel_initializer='glorot_uniform',
+                       activation='linear', padding='valid', use_bias=True))
 
     model.compile(optimizer=Adam(lr=0.001), loss='mse', metrics=['accuracy'])
 
@@ -148,7 +160,7 @@ def SRCNN(x_data, y_data, load_data=True):
     if load_data:
         model.load_weights(filepath)
     else:
-        model.fit(x_data, y_data, epochs=250, batch_size=100, validation_split=0.2,
+        model.fit(x_data, y_data, epochs=25, batch_size=10, validation_split=0.2,
               callbacks=callbacks_list)
     return model
 
@@ -193,10 +205,10 @@ def test_model(low_res, high_res, model):
 
 
 if __name__ == "__main__":
-    low_res = 8
+    low_res = 16
     high_res = 32
     dim = 32
-    count = 1000
+    count = 100
     load_model = False
 
     if not load_model:
