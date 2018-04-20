@@ -125,18 +125,19 @@ def SRCNN(x_data, y_data, load_data=True):
 
     model.add(Conv2D(filters=64, kernel_size=(4,4), padding='valid', input_shape=(dim, dim, 1),
                      activation='relu', init='he_normal', use_bias=True))
-    model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
-    # model.add(Dense(1000, activation='linear', use_bias=True))
-    model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
-                              activation='sigmoid', padding='valid', use_bias=True))
+    #model.add(Conv2D(filters=128, kernel_size=(8,8), padding='valid', init='he_normal', use_bias=True))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    model.add(Dense(1000, activation='sigmoid', use_bias=True))
+    #model.add(Conv2DTranspose(filters=128, kernel_size=(8, 8), kernel_initializer='glorot_uniform',
+    #                          activation='sigmoid', padding='valid', use_bias=True))
     model.add(Conv2DTranspose(filters=1, kernel_size=(4, 4), kernel_initializer='glorot_uniform',
-                       activation='hard_sigmoid', padding='valid', use_bias=True))
+                       activation='linear', padding='valid', use_bias=True))
 
     model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
 
     # checkpoint
     filepath = "weights.best.hdf5"
-    checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+    checkpoint = ModelCheckpoint(filepath, monitor='acc', verbose=1, save_best_only=True, mode='max')
     callbacks_list = [checkpoint, TensorBoard(histogram_freq=0, write_images=True)]
 
     if load_data:
