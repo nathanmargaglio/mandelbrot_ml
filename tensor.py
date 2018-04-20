@@ -102,12 +102,9 @@ def SRCNN(x_data, y_data, load_data=True):
     # model.add(Dense(dim[0], activation='linear', use_bias=True))
     # model.add(BatchNormalization())
 
-    model.add(Conv2D(64, kernel_size=(2, 2), input_shape=shape))
+    model.add(Conv2D(64, kernel_size=(8, 8), input_shape=shape))
     model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Dense(256, activation='sigmoid', use_bias=True))
-    model.add(Conv2DTranspose(1, kernel_size=(2, 2)))
+    model.add(Conv2DTranspose(1, kernel_size=(8, 8), activation='linear', use_bias=True))
 
     model.compile(optimizer=opt, loss='mse', metrics=['accuracy'])
 
@@ -137,11 +134,11 @@ def test_model(low_res, high_res, model, show=False):
         l = np.random.choice([1, 0.5, 0.25, 0.125])
 
         data = get_data(low_res, dim, x0=x, y0=y, length=l)
-        low_test = np.expand_dims(data, 2)
+        low_test = np.array([np.expand_dims(data, 2)])
         # low_test = np.array([np.concatenate(data).ravel()])
 
         data = get_data(high_res, dim, x0=x, y0=y, length=l)
-        high_test = np.expand_dims(data, 2)
+        high_test = np.array([np.expand_dims(data, 2)])
         # high_test = np.array([np.concatenate(data).ravel()])
 
         predictions = model.predict(low_test)
