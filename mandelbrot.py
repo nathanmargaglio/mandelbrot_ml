@@ -80,7 +80,7 @@ def get_data(d, dh, x0=-0.5, y0=0., length=1.):
     return generate(dim=d, x0=x0, y0=y0, length=length, res=int(dh / d))
 
 
-def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100,
+def generate_data_sets(low_res=16, high_res=32, dim=32, radii=None, count=100,
                        min_color_ratio=0.05, max_color_ratio=0.95,
                        prep='conv', load_available=True):
     lows = []
@@ -99,8 +99,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100,
     while i < count:
 
         # Low-Res Mandelbrot
-        if load_available and len(available_data):
-            file = np.random.choice([x for x in available_data if "{}res".format(low_res) in x])
+        low_res_files = [x for x in available_data if "{}res".format(low_res) in x]
+        if load_available and len(low_res_files):
+            file = np.random.choice(low_res_files)
             available_data.remove(file)
             variables = re.search("(.+)x_(.+)y_(.+)l_(.+)res.txt", file)
             x = float(variables.group(1))
@@ -130,9 +131,9 @@ def generate_data_sets(low_res=2, high_res=32, dim=32, radii=None, count=100,
             logging.info("  Color Sum: %s on [%s, %s]", color_sum, min_color_ratio * (dim ** 2),
                          max_color_ratio * (dim ** 2))
 
-            # if color_sum < min_color_ratio * (dim ** 2) or color_sum > max_color_ratio * (dim ** 2):
-            #     logging.info("Generated Mandelbrot doesn't meet color requirements.")
-            #     continue
+            if color_sum < min_color_ratio * (dim ** 2) or color_sum > max_color_ratio * (dim ** 2):
+                logging.info("Generated Mandelbrot doesn't meet color requirements.")
+                continue
 
             np.savetxt(file_name, low_data, fmt='%d')
             logging.info("  Done!")

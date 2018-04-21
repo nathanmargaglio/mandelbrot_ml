@@ -17,6 +17,8 @@ from keras.layers import LeakyReLU, Dropout
 from keras.layers import BatchNormalization
 from keras.optimizers import Adam, RMSprop
 
+from mandelbrot import generate_data_sets
+
 import matplotlib.pyplot as plt
 
 class ElapsedTimer(object):
@@ -33,7 +35,7 @@ class ElapsedTimer(object):
         print("Elapsed: %s " % self.elapsed(time.time() - self.start_time) )
 
 class DCGAN(object):
-    def __init__(self, img_rows=28, img_cols=28, channel=1):
+    def __init__(self, img_rows=32, img_cols=32, channel=1):
 
         self.img_rows = img_rows
         self.img_cols = img_cols
@@ -50,7 +52,7 @@ class DCGAN(object):
         self.D = Sequential()
         depth = 64
         dropout = 0.4
-        # In: 28 x 28 x 1, depth = 1
+        # In: 32 x 32 x 1, depth = 1
         # Out: 14 x 14 x 1, depth=64
         input_shape = (self.img_rows, self.img_cols, self.channel)
         self.D.add(Conv2D(depth*1, 5, strides=2, input_shape=input_shape,\
@@ -83,7 +85,7 @@ class DCGAN(object):
         self.G = Sequential()
         dropout = 0.4
         depth = 64+64+64+64
-        dim = 7
+        dim = 8
         # In: 100
         # Out: dim x dim x depth
         self.G.add(Dense(dim*dim*depth, input_dim=100))
@@ -137,13 +139,15 @@ class DCGAN(object):
 
 class MNIST_DCGAN(object):
     def __init__(self):
-        self.img_rows = 28
-        self.img_cols = 28
+        self.img_rows = 32
+        self.img_cols = 32
         self.channel = 1
 
-        self.x_train = input_data.read_data_sets("mnist",\
-        	one_hot=True).train.images
-        self.x_train = self.x_train.reshape(-1, self.img_rows,\
+        # self.x_train = input_data.read_data_sets("mnist", one_hot=True).train.images
+
+        x, y = generate_data_sets(prep='flat', count=100)
+
+        self.x_train = y.reshape(-1, self.img_rows,\
         	self.img_cols, 1).astype(np.float32)
 
         self.DCGAN = DCGAN()
