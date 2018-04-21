@@ -209,7 +209,7 @@ class MNIST_DCGAN(object):
 if __name__ == '__main__':
     mnist_dcgan = MNIST_DCGAN()
     timer = ElapsedTimer()
-    mnist_dcgan.train(train_steps=10000, batch_size=50, save_interval=500)
+    mnist_dcgan.train(train_steps=10000, batch_size=50, save_interval=50)
     timer.elapsed_time()
     mnist_dcgan.plot_images(fake=True)
     mnist_dcgan.plot_images(fake=False, save2file=True)
